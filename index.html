@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meal Planner &amp; Grocery List</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;1,6..12,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6efe2;
+    --panel: #fffdf6;
+    --panel-warm: #fdf8eb;
+    --ink: #32271a;
+    --ink-soft: #97835f;
+    --line: #eadfc8;
+    --line-soft: #f1e9d6;
+    --accent: #c2542c;
+    --accent-deep: #a8431f;
+    --accent-soft: #f8e9de;
+    --good: #5f7d51;
+    --good-deep: #4c6740;
+    --good-soft: #eaf0e2;
+    --warn: #b97f24;
+    --bad: #b23a2a;
+    --muted: #f3ecdb;
+    --shadow: 0 1px 2px rgba(91,62,24,.05), 0 6px 20px rgba(91,62,24,.08);
+    --shadow-lift: 0 4px 10px rgba(91,62,24,.08), 0 14px 34px rgba(91,62,24,.12);
+    --radius: 16px;
+    --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+    --font-body: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font: 14.5px/1.5 var(--font-body);
+    background:
+      radial-gradient(1100px 520px at 88% -120px, rgba(194,84,44,.07), transparent 60%),
+      radial-gradient(900px 480px at -120px -40px, rgba(95,125,81,.08), transparent 55%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  ::selection { background: var(--accent-soft); }
+  .app { max-width: 1320px; margin: 0 auto; padding: 26px 24px; }
+
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; padding-bottom: 18px; gap: 12px; flex-wrap: wrap;
+    border-bottom: 1px dashed var(--line);
+  }
+  header.top h1 {
+    font-family: var(--font-display);
+    font-size: 30px; font-weight: 700; margin: 0; letter-spacing: -0.015em;
+  }
+  header.top h1 .tagline {
+    font-family: var(--font-display); font-style: italic;
+    font-weight: 500; font-size: 17px; color: var(--ink-soft); letter-spacing: 0;
+  }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  button.btn {
+    background: var(--panel); border: 1px solid var(--line); color: var(--ink);
+    padding: 8px 15px; border-radius: 999px; cursor: pointer;
+    font: inherit; font-size: 13.5px; font-weight: 700; letter-spacing: .01em;
+    transition: background .15s ease, border-color .15s ease, color .15s ease,
+                transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 1px 2px rgba(91,62,24,.06);
+  }
+  button.btn:hover {
+    border-color: #d9c8a5; background: #fffefa;
+    transform: translateY(-1px); box-shadow: 0 3px 9px rgba(91,62,24,.11);
+  }
+  button.btn:active { transform: translateY(0); }
+  button.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.btn.primary {
+    background: var(--accent); color: #fff7ef; border-color: var(--accent);
+    box-shadow: 0 2px 7px rgba(194,84,44,.32);
+  }
+  button.btn.primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); }
+  button.btn.ghost { background: transparent; border-color: transparent; color: var(--ink-soft); box-shadow: none; }
+  button.btn.ghost:hover { background: var(--accent-soft); color: var(--accent-deep); transform: none; box-shadow: none; }
+  button.btn.success {
+    background: var(--good); color: #f4f8ef; border-color: var(--good);
+    box-shadow: 0 2px 7px rgba(95,125,81,.3);
+  }
+  button.btn.success:hover { background: var(--good-deep); border-color: var(--good-deep); }
+  button.btn:disabled { opacity: 0.55; cursor: default; transform: none; }
+  button.btn:disabled:hover { border-color: var(--line); background: var(--panel); box-shadow: none; }
+  button.icon {
+    width: 30px; height: 30px; padding: 0; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .card.grocery {
+    background: var(--panel-warm);
+    border-top: 4px solid var(--accent);
+    border-top-left-radius: 8px; border-top-right-radius: 8px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } }
+
+  .section { padding: 22px 24px; margin-bottom: 20px; }
+  .section h2 {
+    margin: 0 0 14px 0;
+    font-family: var(--font-display);
+    font-size: 21px; font-weight: 600; letter-spacing: -0.01em;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .section h2 .count { color: var(--ink-soft); font-family: var(--font-body); font-weight: 600; font-size: 13px; }
+
+  /* Week plan chips */
+  .week-chips {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    min-height: 38px;
+    align-items: center;
+  }
+  .chip {
+    background: var(--accent-soft); color: var(--accent-deep);
+    border: 1px solid #ecd2bd;
+    padding: 6px 11px 6px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 6px;
+    box-shadow: 0 1px 2px rgba(91,62,24,.05);
+  }
+  .chip .x {
+    cursor: pointer;
+    color: var(--accent-deep); opacity: 0.55;
+    width: 16px; height: 16px; line-height: 14px; text-align: center;
+    border-radius: 50%;
+    transition: background .12s ease, opacity .12s ease;
+  }
+  .chip .x:hover { background: rgba(194,84,44,.16); opacity: 1; }
+  .week-empty {
+    color: var(--ink-soft); font-family: var(--font-display);
+    font-style: italic; font-size: 14.5px;
+  }
+  .week-actions { margin-top: 12px; display: flex; gap: 8px; align-items: center; font-size: 12px; }
+  .week-actions .btn { white-space: nowrap; }
+  .week-actions .meta { color: var(--ink-soft); margin-left: auto; font-weight: 600; }
+
+  /* Meal library */
+  .meal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .meal-card {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    background: var(--panel-warm);
+    display: flex; flex-direction: column; gap: 8px;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    position: relative;
+  }
+  .meal-card:hover {
+    border-color: #dcc9a3;
+    box-shadow: 0 8px 20px rgba(91,62,24,.11);
+    transform: translateY(-2px);
+  }
+  .meal-card.in-plan { background: var(--good-soft); border-color: #c3d2ad; }
+  .meal-name {
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 16.5px; line-height: 1.25;
+  }
+  .meal-meta { font-size: 12.5px; color: var(--ink-soft); flex-grow: 1; }
+  .meal-card-actions { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+  .meal-add-btn {
+    flex-grow: 1;
+    padding: 7px 10px; font-size: 13px; font-weight: 700; font-family: var(--font-body);
+    border-radius: 999px; cursor: pointer;
+    background: var(--accent); color: #fff7ef; border: 1px solid var(--accent);
+    transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+    box-shadow: 0 2px 6px rgba(194,84,44,.25);
+  }
+  .meal-add-btn:hover { background: var(--accent-deep); border-color: var(--accent-deep); }
+  .meal-add-btn.added {
+    background: transparent; color: var(--good-deep); border-color: var(--good);
+    box-shadow: none;
+  }
+  .meal-add-btn.added:hover { background: var(--good-soft); }
+  .add-meal-card {
+    border: 2px dashed #ddcca9;
+    background: transparent;
+    border-radius: 14px;
+    padding: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; min-height: 110px;
+    color: var(--ink-soft); font-weight: 700;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .add-meal-card:hover { border-color: var(--accent); color: var(--accent-deep); background: var(--accent-soft); }
+
+  /* Grocery list */
+  .gl-section { margin-bottom: 16px; }
+  .gl-section-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--accent-deep); font-weight: 800;
+    padding: 4px 0; border-bottom: 1px dashed #ddc9a4; margin-bottom: 6px;
+  }
+  .gl-item {
+    padding: 6px 0;
+    display: flex; justify-content: space-between; gap: 10px;
+    font-size: 13.5px;
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .gl-item:last-child { border-bottom: none; }
+  .gl-item .name { flex: 1; }
+  .gl-item .qty { color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
+  .gl-item .from {
+    font-size: 11px; color: var(--ink-soft); font-style: italic; margin-left: 4px;
+  }
+  .gl-empty {
+    padding: 30px 10px;
+    color: var(--ink-soft); font-family: var(--font-display);
+    font-style: italic; font-size: 14.5px; text-align: center;
+  }
+
+  .staples-panel { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .staples-head {
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; padding: 4px 0;
+    font-size: 13px; font-weight: 700; color: var(--ink-soft);
+  }
+  .staples-head:hover { color: var(--accent-deep); }
+  .staples-list { margin-top: 8px; display: none; }
+  .staples-list.show { display: block; }
+  .staples-list .gl-item { cursor: pointer; user-select: none; border-radius: 6px; }
+  .staples-list .gl-item:hover { background: var(--accent-soft); }
+  .staples-list .gl-item input { margin-right: 8px; accent-color: var(--good); }
+
+  .gl-footer {
+    margin-top: 16px;
+    display: flex; gap: 8px; justify-content: space-between; align-items: center;
+  }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(50,38,25,0.42);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--panel); border-radius: 20px;
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 64px rgba(50,38,25,.32);
+    width: 600px; max-width: 95vw; max-height: 92vh;
+    display: flex; flex-direction: column;
+  }
+  .modal-head {
+    padding: 18px 22px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-head h3 {
+    margin: 0; font-family: var(--font-display);
+    font-size: 19px; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .modal-body { padding: 18px 22px; overflow-y: auto; }
+  .modal-foot {
+    padding: 14px 22px; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    background: var(--panel-warm);
+    border-radius: 0 0 20px 20px;
+  }
+  .modal-foot .right { display: flex; gap: 8px; }
+  .danger { color: var(--bad); }
+
+  .form-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .form-row label { font-size: 12px; font-weight: 700; color: var(--ink-soft); letter-spacing: .02em; }
+  .form-row input, .form-row select, .form-row textarea {
+    padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px;
+    font: inherit; background: #fff; color: var(--ink);
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .ing-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .ing-table th {
+    text-align: left; font-size: 11px; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 800; letter-spacing: 0.08em;
+    padding: 6px 4px; border-bottom: 1px solid var(--line);
+  }
+  .ing-table td { padding: 4px 4px; vertical-align: middle; }
+  .ing-table input, .ing-table select {
+    width: 100%; padding: 6px 8px; border: 1px solid var(--line);
+    border-radius: 7px; font: inherit; background: #fff;
+  }
+  .ing-table input:focus, .ing-table select:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  .ing-table input[type="checkbox"] { accent-color: var(--accent); }
+  .ing-table .col-name { width: 38%; }
+  .ing-table .col-qty { width: 14%; }
+  .ing-table .col-unit { width: 18%; }
+  .ing-table .col-section { width: 22%; }
+  .ing-table .col-staple { width: 4%; text-align: center; }
+  .ing-table .col-del { width: 4%; text-align: center; }
+  .add-ing-row {
+    margin-top: 8px;
+    color: var(--accent-deep); cursor: pointer;
+    font-weight: 700; font-size: 13px;
+    padding: 6px 4px;
+  }
+  .add-ing-row:hover { text-decoration: underline; }
+  .ing-table tr.is-staple input[type="text"] { background: #fdf3da; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #3a2c1c; color: #fff7ec; padding: 11px 20px;
+    border-radius: 999px; font-size: 13px; font-weight: 600;
+    box-shadow: 0 6px 24px rgba(50,38,25,.3);
+    opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 200;
+  }
+  .toast.show { opacity: 1; }
+
+  .help-text {
+    font-size: 12px; color: var(--ink-soft); font-style: italic;
+    padding: 6px 0;
+  }
+
+  /* Import modal tabs */
+  .import-tabs {
+    display: flex; gap: 4px; margin-bottom: 14px;
+    background: var(--muted); padding: 4px; border-radius: 999px;
+  }
+  .import-tab {
+    flex: 1; padding: 7px 10px; border-radius: 999px;
+    background: transparent; border: none; cursor: pointer;
+    font: inherit; font-size: 13px; font-weight: 700; color: var(--ink-soft);
+    transition: background .15s ease, color .15s ease;
+  }
+  .import-tab:hover { color: var(--accent-deep); }
+  .import-tab.active {
+    background: var(--panel); color: var(--accent-deep);
+    box-shadow: 0 1px 3px rgba(91,62,24,.12);
+  }
+  .import-pane { display: none; }
+  .import-pane.active { display: block; }
+  .url-row { display: flex; gap: 8px; align-items: center; }
+  .url-row input { flex: 1; }
+  .import-status {
+    margin-top: 10px; padding: 10px 14px;
+    border-radius: 10px; font-size: 13px; font-weight: 600;
+    display: none;
+  }
+  .import-status.show { display: block; }
+  .import-status.info { background: var(--accent-soft); color: var(--accent-deep); }
+  .import-status.error { background: #f8e3df; color: var(--bad); }
+  .import-status.success { background: var(--good-soft); color: var(--good-deep); }
+  .import-textarea { min-height: 200px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; font-size: 12px; }
+  .import-disclaimer {
+    font-size: 11.5px; color: var(--ink-soft);
+    margin-top: 8px; line-height: 1.55;
+  }
+  .import-disclaimer a { color: var(--accent-deep); }
+  .claude-prompt {
+    background: var(--muted);
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    user-select: all;
+  }
+
+  /* Walmart shopping mode */
+  .wm-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 4px; border-bottom: 1px dashed var(--line-soft); font-size: 13.5px;
+  }
+  .wm-item:last-child { border-bottom: none; }
+  .wm-item input[type="checkbox"] { accent-color: var(--good); }
+  .wm-item.done .wm-name { text-decoration: line-through; color: var(--ink-soft); }
+  .wm-item .wm-name { flex: 1; }
+  .wm-item .wm-qty { color: var(--ink-soft); white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .wm-item a.wm-link { color: var(--accent-deep); text-decoration: none; font-weight: 700; white-space: nowrap; }
+  .wm-item a.wm-link:hover { text-decoration: underline; }
+  .wm-section-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--accent-deep); font-weight: 800;
+    padding: 10px 0 2px 0;
+  }
+  .wm-progress { font-size: 12px; color: var(--ink-soft); font-weight: 700; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+    .meal-card:hover, button.btn:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <h1>Meal Planner <span class="tagline">— what's for dinner this week?</span></h1>
+    <div class="toolbar">
+      <button class="btn ghost" id="btn-export" title="Download backup of meals">Backup</button>
+      <button class="btn ghost" id="btn-import" title="Restore from backup file">Restore</button>
+      <input type="file" id="import-file" accept="application/json" style="display:none">
+      <button class="btn" id="btn-import-recipe">⤓ Import recipe</button>
+      <button class="btn primary" id="btn-add-meal">+ Add meal</button>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- Left column: week plan + library -->
+    <div>
+      <!-- This week's plan -->
+      <div class="card section">
+        <h2>This week's dinners <span class="count" id="week-count"></span></h2>
+        <div class="week-chips" id="week-chips"></div>
+        <div class="week-actions">
+          <button class="btn ghost" id="btn-clear-week" style="font-size:12px;padding:4px 8px;">Clear week</button>
+          <span class="meta" id="week-meta"></span>
+        </div>
+      </div>
+
+      <!-- Meal library -->
+      <div class="card section">
+        <h2>Meal library <span class="count" id="meal-count"></span></h2>
+        <div class="meal-grid" id="meal-grid"></div>
+      </div>
+    </div>
+
+    <!-- Right column: grocery list -->
+    <div>
+      <div class="card section grocery">
+        <h2>Grocery list</h2>
+        <div id="gl-content"></div>
+        <div class="staples-panel" id="staples-panel" style="display:none">
+          <div class="staples-head" id="staples-head">
+            <span>Pantry staples (skipped) <span id="staples-count"></span></span>
+            <span id="staples-toggle">▾</span>
+          </div>
+          <div class="help-text" style="display:none" id="staples-hint">Check anything you're running low on to add it to the list.</div>
+          <div class="staples-list" id="staples-list"></div>
+        </div>
+        <div class="gl-footer" id="gl-footer" style="display:none">
+          <span class="help-text" id="gl-totals"></span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn success" id="btn-copy">Copy list</button>
+            <button class="btn primary" id="btn-walmart">Shop at Walmart →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Meal edit modal -->
+<div class="modal-bg" id="meal-modal-bg">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="meal-modal-title">Add meal</h3>
+      <button class="btn icon ghost" id="meal-modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Meal name</label>
+        <input type="text" id="meal-name" placeholder="e.g. Sheet pan chicken">
+      </div>
+      <div class="form-row">
+        <label>Notes (optional)</label>
+        <input type="text" id="meal-notes" placeholder="e.g. Kids love this. Use 425°F for crispy skin.">
+      </div>
+
+      <label style="font-size:12px;font-weight:500;color:var(--ink-soft);">Ingredients (scaled for your family)</label>
+      <table class="ing-table">
+        <thead>
+          <tr>
+            <th class="col-name">Ingredient</th>
+            <th class="col-qty">Qty</th>
+            <th class="col-unit">Unit</th>
+            <th class="col-section">Section</th>
+            <th class="col-staple" title="Pantry staple — skip from weekly list by default">★</th>
+            <th class="col-del"></th>
+          </tr>
+        </thead>
+        <tbody id="ing-table-body"></tbody>
+      </table>
+      <div class="add-ing-row" id="add-ing-btn">+ Add ingredient</div>
+      <div class="help-text">★ = pantry staple. Things like salt, oil, flour — won't show on weekly list unless you mark "running low."</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost danger" id="meal-modal-delete" style="display:none">Delete meal</button>
+      <div class="right">
+        <button class="btn" id="meal-modal-cancel">Cancel</button>
+        <button class="btn primary" id="meal-modal-save">Save meal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import recipe modal -->
+<div class="modal-bg" id="import-modal-bg">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Import recipe</h3>
+      <button class="btn icon ghost" id="import-modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="import-tabs">
+        <button class="import-tab active" data-import-tab="url">From URL</button>
+        <button class="import-tab" data-import-tab="pdf">From PDF</button>
+        <button class="import-tab" data-import-tab="paste">Paste text</button>
+        <button class="import-tab" data-import-tab="claude">Via Claude</button>
+      </div>
+
+      <!-- URL tab -->
+      <div class="import-pane active" data-import-pane="url">
+        <div class="form-row">
+          <label>Recipe URL</label>
+          <div class="url-row">
+            <input type="url" id="import-url" placeholder="https://www.allrecipes.com/recipe/...">
+            <button class="btn primary" id="btn-fetch-url">Fetch</button>
+          </div>
+        </div>
+        <div class="import-status" id="import-url-status"></div>
+        <div class="import-disclaimer">
+          Works best on recipe sites that include structured data (most major sites: AllRecipes, NYT Cooking,
+          Serious Eats, Food Network, BBC Good Food, etc.). The URL is sent through a public proxy
+          (corsproxy.io) so the browser can read it — no personal data leaves your computer beyond the URL itself.
+          If a site doesn't work, use "Paste text" instead.
+        </div>
+      </div>
+
+      <!-- PDF tab -->
+      <div class="import-pane" data-import-pane="pdf">
+        <div class="form-row">
+          <label>Recipe PDF</label>
+          <input type="file" id="import-pdf-file" accept="application/pdf,.pdf">
+        </div>
+        <div class="import-status" id="import-pdf-status"></div>
+        <div class="import-disclaimer">
+          Works with text-based recipe PDFs (saved from America's Test Kitchen, Half Baked Harvest,
+          and most recipe sites). The PDF is read entirely on your computer — nothing is uploaded.
+          The reader finds the ingredient list and opens it in the editor so you can fix anything it
+          got wrong before saving. Scanned/photo PDFs won't work — use Paste text for those.
+        </div>
+      </div>
+
+      <!-- Paste tab -->
+      <div class="import-pane" data-import-pane="paste">
+        <div class="form-row">
+          <label>Recipe name</label>
+          <input type="text" id="import-paste-name" placeholder="e.g. Mom's chili">
+        </div>
+        <div class="form-row">
+          <label>Paste ingredient list (one per line)</label>
+          <textarea class="import-textarea" id="import-paste-text" placeholder="2 lbs ground beef
+1 onion, diced
+2 cloves garlic
+1 can tomato sauce (15 oz)
+1 packet taco seasoning
+salt and pepper to taste"></textarea>
+        </div>
+        <button class="btn primary" id="btn-parse-paste">Parse ingredients</button>
+        <div class="import-status" id="import-paste-status"></div>
+        <div class="import-disclaimer">
+          Copy the ingredient list from any recipe website and paste it here. Each line should be one
+          ingredient. The parser handles quantities (1, 1.5, 1/2, 1 1/2), units (cups, tbsp, lb, oz, etc.),
+          and tries to guess the right grocery section.
+        </div>
+      </div>
+
+      <!-- Claude tab -->
+      <div class="import-pane" data-import-pane="claude">
+        <div class="form-row">
+          <label>Step 1: Copy this prompt and paste it into Claude with your recipe URL or text</label>
+          <div class="claude-prompt" id="claude-prompt-text">Convert this recipe into JSON for my meal planner. Use this exact format and ONLY return the JSON object, nothing else:
+
+{
+  "name": "Recipe name",
+  "notes": "Brief notes (e.g. cooking time, tips)",
+  "ingredients": [
+    { "name": "ingredient name", "qty": 2, "unit": "lb", "section": "Meat & seafood", "isStaple": false }
+  ]
+}
+
+Rules:
+- Scale ingredients for a family of 6.
+- Section must be one of: Produce, Meat & seafood, Dairy & eggs, Bakery, Pantry, Frozen, Beverages, Household, Other
+- Unit should be lowercase short form: lb, oz, cup, tbsp, tsp, clove, can, jar, bag, box, bunch, pack, gallon, ml, head, count
+- Set isStaple=true only for: salt, pepper, oils, vinegar, basic dried spices, water
+- Use 0 for qty if "to taste" or unspecified
+
+Recipe:
+[paste recipe URL or full text here]</div>
+          <button class="btn ghost" id="btn-copy-claude-prompt" style="margin-top:8px;">Copy prompt</button>
+        </div>
+        <div class="form-row">
+          <label>Step 2: Paste Claude's JSON response here</label>
+          <textarea class="import-textarea" id="import-claude-json" placeholder='{ "name": "...", "ingredients": [...] }'></textarea>
+        </div>
+        <button class="btn primary" id="btn-parse-claude">Import from JSON</button>
+        <div class="import-status" id="import-claude-status"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div></div>
+      <div class="right">
+        <button class="btn" id="import-modal-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Walmart shopping modal -->
+<div class="modal-bg" id="wm-modal-bg">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Shop this list at Walmart</h3>
+      <button class="btn icon ghost" id="wm-modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="help-text" style="padding:0 0 10px 0;">
+        Walmart doesn't let outside apps fill your cart directly, so this is the next best thing:
+        "Open next item" opens a pre-filled Walmart search in one reusable tab. Pick your item,
+        click Add to cart on Walmart, come back, and hit it again. Items get crossed off as you go —
+        when everything's checked, just check out.
+      </div>
+      <div id="wm-items"></div>
+    </div>
+    <div class="modal-foot">
+      <span class="wm-progress" id="wm-progress"></span>
+      <div class="right">
+        <button class="btn" id="wm-copy">Copy list</button>
+        <button class="btn primary" id="wm-next">Open next item ↗</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- State ---------- */
+const STORAGE_KEY = 'meal_planner_v1';
+const SECTIONS = ['Produce','Meat & seafood','Dairy & eggs','Bakery','Pantry','Frozen','Beverages','Household','Other'];
+const UNITS = ['','count','lb','oz','g','kg','cup','tbsp','tsp','clove','can','jar','bag','box','bunch','pack','gallon','liter','ml','head','loaf','dozen'];
+
+let state = load();
+addBuiltinRecipes();
+let editingMealId = null;
+let stapleOverrides = new Set(); // keys: section|name|unit
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return seedData();
+}
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+function seedData() {
+  // Sample meals scaled for a family of 6 to give her a starting point
+  const mk = (name, notes, ings) => ({
+    id: uid(), name, notes,
+    ingredients: ings.map(i => ({ id: uid(), ...i }))
+  });
+  return {
+    meals: [
+      mk('Spaghetti & meatballs', 'Family classic. Make 2x meatballs and freeze half.', [
+        { name: 'ground beef', qty: 2, unit: 'lb', section: 'Meat & seafood', isStaple: false },
+        { name: 'spaghetti', qty: 1.5, unit: 'lb', section: 'Pantry', isStaple: false },
+        { name: 'marinara sauce', qty: 2, unit: 'jar', section: 'Pantry', isStaple: false },
+        { name: 'breadcrumbs', qty: 1, unit: 'cup', section: 'Pantry', isStaple: false },
+        { name: 'eggs', qty: 2, unit: 'count', section: 'Dairy & eggs', isStaple: false },
+        { name: 'parmesan cheese', qty: 0.5, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+        { name: 'onion', qty: 1, unit: 'count', section: 'Produce', isStaple: false },
+        { name: 'garlic', qty: 4, unit: 'clove', section: 'Produce', isStaple: false },
+        { name: 'olive oil', qty: 2, unit: 'tbsp', section: 'Pantry', isStaple: true },
+        { name: 'salt', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+        { name: 'pepper', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+      ]),
+      mk('Sheet pan chicken & veggies', '425°F for 35 min. Toss everything in one bowl first.', [
+        { name: 'chicken thighs', qty: 3, unit: 'lb', section: 'Meat & seafood', isStaple: false },
+        { name: 'baby potatoes', qty: 2, unit: 'lb', section: 'Produce', isStaple: false },
+        { name: 'broccoli', qty: 1, unit: 'lb', section: 'Produce', isStaple: false },
+        { name: 'bell peppers', qty: 2, unit: 'count', section: 'Produce', isStaple: false },
+        { name: 'lemon', qty: 1, unit: 'count', section: 'Produce', isStaple: false },
+        { name: 'olive oil', qty: 3, unit: 'tbsp', section: 'Pantry', isStaple: true },
+        { name: 'garlic powder', qty: 1, unit: 'tbsp', section: 'Pantry', isStaple: true },
+        { name: 'paprika', qty: 1, unit: 'tbsp', section: 'Pantry', isStaple: true },
+        { name: 'salt', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+        { name: 'pepper', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+      ]),
+      mk('Taco night', 'Set up a build-your-own bar. Easy crowd-pleaser.', [
+        { name: 'ground turkey', qty: 2, unit: 'lb', section: 'Meat & seafood', isStaple: false },
+        { name: 'taco seasoning', qty: 2, unit: 'pack', section: 'Pantry', isStaple: false },
+        { name: 'tortillas', qty: 16, unit: 'count', section: 'Bakery', isStaple: false },
+        { name: 'lettuce', qty: 1, unit: 'head', section: 'Produce', isStaple: false },
+        { name: 'tomatoes', qty: 4, unit: 'count', section: 'Produce', isStaple: false },
+        { name: 'onion', qty: 1, unit: 'count', section: 'Produce', isStaple: false },
+        { name: 'shredded cheese', qty: 8, unit: 'oz', section: 'Dairy & eggs', isStaple: false },
+        { name: 'sour cream', qty: 16, unit: 'oz', section: 'Dairy & eggs', isStaple: false },
+        { name: 'salsa', qty: 1, unit: 'jar', section: 'Pantry', isStaple: false },
+        { name: 'refried beans', qty: 1, unit: 'can', section: 'Pantry', isStaple: false },
+      ]),
+      mk('BBQ chicken pizza', 'Pre-made crusts make this 20 minutes. Use rotisserie chicken.', [
+        { name: 'pizza crusts', qty: 2, unit: 'count', section: 'Bakery', isStaple: false },
+        { name: 'rotisserie chicken', qty: 1, unit: 'count', section: 'Meat & seafood', isStaple: false },
+        { name: 'BBQ sauce', qty: 1, unit: 'cup', section: 'Pantry', isStaple: false },
+        { name: 'mozzarella cheese', qty: 16, unit: 'oz', section: 'Dairy & eggs', isStaple: false },
+        { name: 'red onion', qty: 0.5, unit: 'count', section: 'Produce', isStaple: false },
+        { name: 'cilantro', qty: 0.25, unit: 'cup', section: 'Produce', isStaple: false },
+      ]),
+      mk('Chicken stir fry', 'Cook rice in the rice cooker. 15 min on the stove.', [
+        { name: 'chicken breast', qty: 2, unit: 'lb', section: 'Meat & seafood', isStaple: false },
+        { name: 'jasmine rice', qty: 3, unit: 'cup', section: 'Pantry', isStaple: false },
+        { name: 'frozen stir fry vegetables', qty: 2, unit: 'bag', section: 'Frozen', isStaple: false },
+        { name: 'soy sauce', qty: 0.5, unit: 'cup', section: 'Pantry', isStaple: true },
+        { name: 'sesame oil', qty: 2, unit: 'tbsp', section: 'Pantry', isStaple: true },
+        { name: 'garlic', qty: 4, unit: 'clove', section: 'Produce', isStaple: false },
+        { name: 'fresh ginger', qty: 1, unit: 'tbsp', section: 'Produce', isStaple: false },
+      ]),
+      mk('Breakfast for dinner', 'Pancakes + eggs + bacon. Easy weeknight win.', [
+        { name: 'pancake mix', qty: 1, unit: 'box', section: 'Pantry', isStaple: false },
+        { name: 'eggs', qty: 12, unit: 'count', section: 'Dairy & eggs', isStaple: false },
+        { name: 'bacon', qty: 1, unit: 'lb', section: 'Meat & seafood', isStaple: false },
+        { name: 'maple syrup', qty: 1, unit: 'jar', section: 'Pantry', isStaple: false },
+        { name: 'butter', qty: 0.5, unit: 'cup', section: 'Dairy & eggs', isStaple: true },
+        { name: 'milk', qty: 2, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+      ]),
+    ],
+    weekPlan: [],
+  };
+}
+
+/* ---------- Built-in recipes (added once, even for existing users) ---------- */
+function builtinRecipes() {
+  const mk = (name, notes, ings) => ({
+    id: uid(), name, notes,
+    ingredients: ings.map(i => ({ id: uid(), ...i }))
+  });
+  return [
+    mk('Beef Taco Bake', "America's Test Kitchen. 475°F, ~30 min. Tacos stand upright in the bean mixture. Serves 4-6.", [
+      { name: 'Ro-Tel diced tomatoes with green chiles', qty: 2, unit: 'can', section: 'Pantry', isStaple: false },
+      { name: 'refried beans', qty: 1, unit: 'can', section: 'Pantry', isStaple: false },
+      { name: 'hot sauce', qty: 1, unit: 'tbsp', section: 'Pantry', isStaple: true },
+      { name: 'fresh cilantro', qty: 0.25, unit: 'cup', section: 'Produce', isStaple: false },
+      { name: 'shredded Mexican-blend cheese', qty: 3, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+      { name: 'ground beef (90% lean)', qty: 1.5, unit: 'lb', section: 'Meat & seafood', isStaple: false },
+      { name: 'taco seasoning', qty: 1, unit: 'pack', section: 'Pantry', isStaple: false },
+      { name: 'taco shells', qty: 12, unit: 'count', section: 'Pantry', isStaple: false },
+      { name: 'scallions', qty: 3, unit: 'count', section: 'Produce', isStaple: false },
+    ]),
+    mk('Cheesy Beef Enchiladas', "America's Test Kitchen. 425°F, ~50 min. Scaled 1.5x from the original to serve 6.", [
+      { name: 'ground beef (90% lean)', qty: 2.25, unit: 'lb', section: 'Meat & seafood', isStaple: false },
+      { name: 'scallions', qty: 6, unit: 'count', section: 'Produce', isStaple: false },
+      { name: 'chili powder', qty: 1.5, unit: 'tbsp', section: 'Pantry', isStaple: true },
+      { name: 'garlic', qty: 3, unit: 'clove', section: 'Produce', isStaple: false },
+      { name: 'ground cumin', qty: 1.5, unit: 'tsp', section: 'Pantry', isStaple: true },
+      { name: 'salt', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+      { name: 'Colby Jack cheese', qty: 18, unit: 'oz', section: 'Dairy & eggs', isStaple: false },
+      { name: 'sour cream', qty: 1.5, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+      { name: 'enchilada sauce', qty: 2, unit: 'can', section: 'Pantry', isStaple: false },
+      { name: 'flour tortillas (10-inch)', qty: 12, unit: 'count', section: 'Bakery', isStaple: false },
+      { name: 'jarred sliced jalapeños', qty: 1, unit: 'jar', section: 'Pantry', isStaple: false },
+    ]),
+    mk('Creamy Chicken Noodle Soup', 'Half Baked Harvest. ~1 hr in a Dutch oven; can simmer on low 4-6 hours. Serves 6.', [
+      { name: 'salted butter', qty: 6, unit: 'tbsp', section: 'Dairy & eggs', isStaple: true },
+      { name: 'yellow onion', qty: 1, unit: 'count', section: 'Produce', isStaple: false },
+      { name: 'garlic', qty: 6, unit: 'clove', section: 'Produce', isStaple: false },
+      { name: 'celery', qty: 1, unit: 'cup', section: 'Produce', isStaple: false },
+      { name: 'carrots', qty: 1, unit: 'cup', section: 'Produce', isStaple: false },
+      { name: 'flour', qty: 0.33, unit: 'cup', section: 'Pantry', isStaple: true },
+      { name: 'fresh thyme', qty: 2, unit: 'tbsp', section: 'Produce', isStaple: false },
+      { name: 'fresh sage', qty: 2, unit: 'tbsp', section: 'Produce', isStaple: false },
+      { name: 'bay leaf', qty: 1, unit: 'count', section: 'Pantry', isStaple: true },
+      { name: 'chicken broth', qty: 8, unit: 'cup', section: 'Pantry', isStaple: false },
+      { name: 'boneless chicken breasts or thighs', qty: 1, unit: 'lb', section: 'Meat & seafood', isStaple: false },
+      { name: 'egg noodles', qty: 3, unit: 'cup', section: 'Pantry', isStaple: false },
+      { name: 'whole milk', qty: 1, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+      { name: 'shaved parmesan cheese', qty: 0.33, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+      { name: 'fresh parsley', qty: 0.25, unit: 'cup', section: 'Produce', isStaple: false },
+    ]),
+    mk('Fettuccine Alfredo', "America's Test Kitchen. Doubled from the original to serve 6 as a main. Serve immediately — doesn't hold.", [
+      { name: 'heavy cream', qty: 3, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+      { name: 'unsalted butter', qty: 4, unit: 'tbsp', section: 'Dairy & eggs', isStaple: true },
+      { name: 'salt', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+      { name: 'black pepper', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+      { name: 'fresh fettuccine', qty: 18, unit: 'oz', section: 'Pantry', isStaple: false },
+      { name: 'parmesan cheese', qty: 3, unit: 'oz', section: 'Dairy & eggs', isStaple: false },
+      { name: 'ground nutmeg', qty: 0.25, unit: 'tsp', section: 'Pantry', isStaple: true },
+    ]),
+    mk('Lemon Basil Zucchini Pasta Alfredo', 'Half Baked Harvest. ~45 min. Caramelized lemon + basil go on top at the end. Serves 6.', [
+      { name: 'linguine or fettuccine', qty: 1, unit: 'lb', section: 'Pantry', isStaple: false },
+      { name: 'salted butter', qty: 6, unit: 'tbsp', section: 'Dairy & eggs', isStaple: true },
+      { name: 'lemon', qty: 1, unit: 'count', section: 'Produce', isStaple: false },
+      { name: 'fresh basil', qty: 0.5, unit: 'cup', section: 'Produce', isStaple: false },
+      { name: 'yellow onion', qty: 1, unit: 'count', section: 'Produce', isStaple: false },
+      { name: 'garlic', qty: 2, unit: 'clove', section: 'Produce', isStaple: false },
+      { name: 'zucchini or yellow squash', qty: 2, unit: 'count', section: 'Produce', isStaple: false },
+      { name: 'fresh thyme', qty: 2, unit: 'tbsp', section: 'Produce', isStaple: false },
+      { name: 'chili flakes', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+      { name: 'salt', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+      { name: 'black pepper', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+      { name: 'heavy cream', qty: 1, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+      { name: 'grated parmesan cheese', qty: 1.5, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+    ]),
+    mk('Ultimate Cinnamon Buns', "America's Test Kitchen. Makes 8 big buns. 1.5 hr active + ~3 hr rising; can be refrigerated overnight before baking.", [
+      { name: 'whole milk', qty: 1, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+      { name: 'instant yeast', qty: 2.25, unit: 'tsp', section: 'Pantry', isStaple: false },
+      { name: 'eggs', qty: 3, unit: 'count', section: 'Dairy & eggs', isStaple: false },
+      { name: 'all-purpose flour', qty: 4.25, unit: 'cup', section: 'Pantry', isStaple: false },
+      { name: 'cornstarch', qty: 0.5, unit: 'cup', section: 'Pantry', isStaple: true },
+      { name: 'granulated sugar', qty: 0.5, unit: 'cup', section: 'Pantry', isStaple: true },
+      { name: 'salt', qty: 2, unit: 'tsp', section: 'Pantry', isStaple: true },
+      { name: 'unsalted butter', qty: 1, unit: 'cup', section: 'Dairy & eggs', isStaple: false },
+      { name: 'light brown sugar', qty: 1.5, unit: 'cup', section: 'Pantry', isStaple: false },
+      { name: 'ground cinnamon', qty: 1.5, unit: 'tbsp', section: 'Pantry', isStaple: true },
+      { name: 'cream cheese', qty: 4, unit: 'oz', section: 'Dairy & eggs', isStaple: false },
+      { name: 'vanilla extract', qty: 1, unit: 'tsp', section: 'Pantry', isStaple: true },
+      { name: "confectioners' sugar", qty: 1.5, unit: 'cup', section: 'Pantry', isStaple: false },
+    ]),
+  ];
+}
+
+function addBuiltinRecipes() {
+  if (state.builtinV2) return;
+  const existing = new Set(state.meals.map(m => (m.name || '').toLowerCase()));
+  builtinRecipes().forEach(r => {
+    if (!existing.has(r.name.toLowerCase())) state.meals.push(r);
+  });
+  state.builtinV2 = true;
+  save();
+}
+
+/* ---------- Helpers ---------- */
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function mealById(id) { return state.meals.find(m => m.id === id); }
+function fmtQty(q) {
+  if (!q || q === 0) return '';
+  // Show as fraction if it's a common one
+  const r = Math.round(q * 100) / 100;
+  if (r === 0.25) return '1/4';
+  if (r === 0.5) return '1/2';
+  if (r === 0.75) return '3/4';
+  if (r === 0.33 || r === 0.34) return '1/3';
+  if (r === 0.67 || r === 0.66) return '2/3';
+  // Mixed numbers (1.5 -> 1 1/2)
+  if (r > 1) {
+    const intPart = Math.floor(r);
+    const frac = r - intPart;
+    if (Math.abs(frac - 0.5) < 0.01) return `${intPart} 1/2`;
+    if (Math.abs(frac - 0.25) < 0.01) return `${intPart} 1/4`;
+    if (Math.abs(frac - 0.75) < 0.01) return `${intPart} 3/4`;
+  }
+  return Number.isInteger(r) ? String(r) : String(r);
+}
+function ingKey(name, unit) {
+  return `${(name||'').trim().toLowerCase()}|${(unit||'').trim().toLowerCase()}`;
+}
+
+/* ---------- Render: Week chips ---------- */
+function renderWeek() {
+  const chips = document.getElementById('week-chips');
+  document.getElementById('week-count').textContent = state.weekPlan.length ? `(${state.weekPlan.length})` : '';
+  if (!state.weekPlan.length) {
+    chips.innerHTML = '<span class="week-empty">No meals selected. Click "+ Add" on a meal below to start your week.</span>';
+    document.getElementById('week-meta').textContent = '';
+    return;
+  }
+  chips.innerHTML = state.weekPlan.map((id, idx) => {
+    const m = mealById(id);
+    if (!m) return '';
+    return `<span class="chip">${escapeHtml(m.name)} <span class="x" data-remove-idx="${idx}" title="Remove">×</span></span>`;
+  }).join('');
+  chips.querySelectorAll('[data-remove-idx]').forEach(el => {
+    el.addEventListener('click', () => {
+      state.weekPlan.splice(Number(el.dataset.removeIdx), 1);
+      save();
+      renderAll();
+    });
+  });
+  // Calculate total ingredient count
+  const ings = aggregateIngredients(false);
+  const stapleCount = aggregateIngredients(true).length - ings.length;
+  document.getElementById('week-meta').textContent = `${ings.length} items on list${stapleCount ? ` · ${stapleCount} staples skipped` : ''}`;
+}
+
+/* ---------- Render: Meal Library ---------- */
+function renderLibrary() {
+  const grid = document.getElementById('meal-grid');
+  document.getElementById('meal-count').textContent = state.meals.length ? `(${state.meals.length})` : '';
+  const cards = state.meals.map(m => {
+    const inPlanCount = state.weekPlan.filter(id => id === m.id).length;
+    return `
+      <div class="meal-card ${inPlanCount ? 'in-plan' : ''}">
+        <div class="meal-name">${escapeHtml(m.name)}${inPlanCount > 1 ? ` <span style="color:var(--good);">×${inPlanCount}</span>` : ''}</div>
+        <div class="meal-meta">${m.ingredients.length} ingredient${m.ingredients.length===1?'':'s'}${m.notes ? ' · ' + escapeHtml(m.notes.slice(0, 60)) + (m.notes.length > 60 ? '…' : '') : ''}</div>
+        <div class="meal-card-actions">
+          <button class="meal-add-btn ${inPlanCount ? 'added' : ''}" data-add-id="${m.id}">${inPlanCount ? '✓ Added' + (inPlanCount > 1 ? ` (${inPlanCount})` : '') : '+ Add to week'}</button>
+          <button class="btn icon ghost" data-edit-id="${m.id}" title="Edit meal">✎</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  const addCard = `<div class="add-meal-card" id="add-meal-card-inline"><div style="font-size:24px;line-height:1;">+</div><div style="margin-top:6px;">Add a new meal</div></div>`;
+  grid.innerHTML = cards + addCard;
+
+  grid.querySelectorAll('[data-add-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.weekPlan.push(btn.dataset.addId);
+      save();
+      renderAll();
+    });
+  });
+  grid.querySelectorAll('[data-edit-id]').forEach(btn => {
+    btn.addEventListener('click', () => openMealModal(btn.dataset.editId));
+  });
+  document.getElementById('add-meal-card-inline').addEventListener('click', () => openMealModal());
+}
+
+/* ---------- Aggregation ---------- */
+// Returns array of grouped non-staple items, by section.
+// If includeStaples=true, returns ALL items (staples + normal) flat list.
+function aggregateIngredients(includeStaples) {
+  const map = new Map(); // key -> { name, qty, unit, section, isStaple, fromMeals: Set }
+  state.weekPlan.forEach(mealId => {
+    const m = mealById(mealId);
+    if (!m) return;
+    m.ingredients.forEach(ing => {
+      const key = ingKey(ing.name, ing.unit);
+      if (!map.has(key)) {
+        map.set(key, {
+          name: ing.name,
+          qty: 0,
+          unit: ing.unit || '',
+          section: ing.section || 'Other',
+          isStaple: !!ing.isStaple,
+          fromMeals: new Set()
+        });
+      }
+      const item = map.get(key);
+      item.qty += Number(ing.qty) || 0;
+      // If any meal flags it staple, treat it as staple (more conservative)
+      // Actually no — if any meal NEEDS quantity (non-staple), respect that
+      if (!ing.isStaple) item.isStaple = false;
+      item.fromMeals.add(m.name);
+    });
+  });
+  let arr = Array.from(map.values());
+  if (!includeStaples) {
+    arr = arr.filter(i => !i.isStaple || stapleOverrides.has(ingKey(i.name, i.unit)));
+  }
+  return arr;
+}
+
+/* ---------- Render: Grocery List ---------- */
+function renderGroceryList() {
+  const content = document.getElementById('gl-content');
+  const stapPanel = document.getElementById('staples-panel');
+  const stapList = document.getElementById('staples-list');
+  const footer = document.getElementById('gl-footer');
+
+  if (!state.weekPlan.length) {
+    content.innerHTML = '<div class="gl-empty">Your grocery list will appear here once you add meals to your week.</div>';
+    stapPanel.style.display = 'none';
+    footer.style.display = 'none';
+    return;
+  }
+
+  const items = aggregateIngredients(false);
+  const allItems = aggregateIngredients(true);
+  const staples = allItems.filter(i => i.isStaple && !stapleOverrides.has(ingKey(i.name, i.unit)));
+
+  // Group items by section, in our preferred order
+  const grouped = {};
+  items.forEach(i => {
+    const s = i.section || 'Other';
+    if (!grouped[s]) grouped[s] = [];
+    grouped[s].push(i);
+  });
+
+  if (items.length === 0) {
+    content.innerHTML = '<div class="gl-empty">All ingredients in selected meals are pantry staples. Toggle any below if you need to restock.</div>';
+  } else {
+    let html = '';
+    SECTIONS.forEach(sec => {
+      if (!grouped[sec]) return;
+      grouped[sec].sort((a,b) => a.name.localeCompare(b.name));
+      html += `<div class="gl-section">
+        <div class="gl-section-title">${sec}</div>
+        ${grouped[sec].map(i => `
+          <div class="gl-item">
+            <span class="name">${escapeHtml(i.name)}</span>
+            <span class="qty">${fmtQty(i.qty)}${i.unit && i.unit !== 'count' ? ' ' + escapeHtml(i.unit) : ''}</span>
+          </div>
+        `).join('')}
+      </div>`;
+    });
+    content.innerHTML = html;
+  }
+
+  // Staples panel
+  if (staples.length === 0 && stapleOverrides.size === 0) {
+    stapPanel.style.display = 'none';
+  } else {
+    stapPanel.style.display = '';
+    document.getElementById('staples-count').textContent = `(${staples.length})`;
+    staples.sort((a,b) => a.name.localeCompare(b.name));
+    stapList.innerHTML = staples.map(i => {
+      const k = ingKey(i.name, i.unit);
+      return `<div class="gl-item" data-staple-key="${k}">
+        <label style="flex:1; cursor:pointer; display:flex; align-items:center;">
+          <input type="checkbox" data-key="${k}">
+          <span class="name">${escapeHtml(i.name)}</span>
+        </label>
+        <span class="qty">${fmtQty(i.qty)}${i.unit && i.unit !== 'count' ? ' ' + escapeHtml(i.unit) : ''}</span>
+      </div>`;
+    }).join('');
+    stapList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const k = cb.dataset.key;
+        if (cb.checked) stapleOverrides.add(k);
+        else stapleOverrides.delete(k);
+        renderAll();
+      });
+    });
+  }
+
+  // Footer with copy + counts
+  footer.style.display = '';
+  document.getElementById('gl-totals').textContent = `${items.length} item${items.length===1?'':'s'} on list`;
+}
+
+/* ---------- Meal Modal ---------- */
+let modalIngredients = []; // working copy
+
+function openMealModal(id) {
+  editingMealId = id || null;
+  document.getElementById('meal-modal-title').textContent = id ? 'Edit meal' : 'Add meal';
+  document.getElementById('meal-modal-delete').style.display = id ? '' : 'none';
+
+  if (id) {
+    const m = mealById(id);
+    document.getElementById('meal-name').value = m.name || '';
+    document.getElementById('meal-notes').value = m.notes || '';
+    modalIngredients = m.ingredients.map(i => ({ ...i }));
+  } else {
+    document.getElementById('meal-name').value = '';
+    document.getElementById('meal-notes').value = '';
+    modalIngredients = [{ id: uid(), name: '', qty: '', unit: '', section: 'Produce', isStaple: false }];
+  }
+  renderIngTable();
+  document.getElementById('meal-modal-bg').classList.add('show');
+  setTimeout(() => document.getElementById('meal-name').focus(), 50);
+}
+
+function closeMealModal() {
+  document.getElementById('meal-modal-bg').classList.remove('show');
+  editingMealId = null;
+  modalIngredients = [];
+}
+
+function renderIngTable() {
+  const tbody = document.getElementById('ing-table-body');
+  tbody.innerHTML = modalIngredients.map((ing, idx) => `
+    <tr class="${ing.isStaple ? 'is-staple' : ''}" data-idx="${idx}">
+      <td class="col-name"><input type="text" data-field="name" value="${escapeHtml(ing.name)}" placeholder="Ingredient"></td>
+      <td class="col-qty"><input type="number" step="0.25" data-field="qty" value="${ing.qty===''||ing.qty==null?'':ing.qty}" placeholder=""></td>
+      <td class="col-unit">
+        <select data-field="unit">
+          ${UNITS.map(u => `<option value="${u}" ${u===(ing.unit||'')?'selected':''}>${u||'—'}</option>`).join('')}
+        </select>
+      </td>
+      <td class="col-section">
+        <select data-field="section">
+          ${SECTIONS.map(s => `<option value="${s}" ${s===(ing.section||'Other')?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td class="col-staple">
+        <input type="checkbox" data-field="isStaple" ${ing.isStaple?'checked':''} title="Pantry staple">
+      </td>
+      <td class="col-del">
+        <button class="btn icon ghost" data-del-idx="${idx}" title="Remove">×</button>
+      </td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', e => {
+      const tr = e.target.closest('tr');
+      const idx = Number(tr.dataset.idx);
+      const field = e.target.dataset.field;
+      let val;
+      if (e.target.type === 'checkbox') val = e.target.checked;
+      else if (e.target.type === 'number') val = e.target.value === '' ? '' : parseFloat(e.target.value);
+      else val = e.target.value;
+      modalIngredients[idx][field] = val;
+      if (field === 'isStaple') {
+        tr.classList.toggle('is-staple', val);
+      }
+    });
+  });
+  tbody.querySelectorAll('[data-del-idx]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modalIngredients.splice(Number(btn.dataset.delIdx), 1);
+      renderIngTable();
+    });
+  });
+}
+
+function addIngRow() {
+  modalIngredients.push({ id: uid(), name: '', qty: '', unit: '', section: 'Produce', isStaple: false });
+  renderIngTable();
+  // Focus the new name input
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#ing-table-body tr');
+    if (inputs.length) {
+      const last = inputs[inputs.length-1].querySelector('input[data-field="name"]');
+      if (last) last.focus();
+    }
+  }, 30);
+}
+
+function saveMeal() {
+  const name = document.getElementById('meal-name').value.trim();
+  const notes = document.getElementById('meal-notes').value.trim();
+  if (!name) return toast('Meal name is required');
+
+  // Filter out empty ingredients
+  const ingredients = modalIngredients
+    .filter(i => i.name && i.name.trim())
+    .map(i => ({
+      id: i.id || uid(),
+      name: i.name.trim(),
+      qty: i.qty === '' || i.qty == null ? 0 : Number(i.qty),
+      unit: i.unit || '',
+      section: i.section || 'Other',
+      isStaple: !!i.isStaple
+    }));
+
+  const meal = { id: editingMealId || uid(), name, notes, ingredients };
+  if (editingMealId) {
+    state.meals = state.meals.map(m => m.id === editingMealId ? meal : m);
+  } else {
+    state.meals.push(meal);
+  }
+  save();
+  closeMealModal();
+  renderAll();
+  toast('Meal saved');
+}
+
+function deleteMeal() {
+  if (!editingMealId) return;
+  if (!confirm('Delete this meal? It will also be removed from this week.')) return;
+  state.meals = state.meals.filter(m => m.id !== editingMealId);
+  state.weekPlan = state.weekPlan.filter(id => id !== editingMealId);
+  save();
+  closeMealModal();
+  renderAll();
+  toast('Deleted');
+}
+
+/* ---------- Copy to clipboard ---------- */
+function buildListText() {
+  const items = aggregateIngredients(false);
+  const grouped = {};
+  items.forEach(i => {
+    const s = i.section || 'Other';
+    if (!grouped[s]) grouped[s] = [];
+    grouped[s].push(i);
+  });
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+  const mealNames = state.weekPlan.map(id => (mealById(id)||{}).name).filter(Boolean);
+  let txt = `GROCERY LIST — ${dateStr}\n`;
+  txt += `For: ${mealNames.join(', ')}\n\n`;
+
+  SECTIONS.forEach(sec => {
+    if (!grouped[sec]) return;
+    grouped[sec].sort((a,b) => a.name.localeCompare(b.name));
+    txt += sec.toUpperCase() + '\n';
+    grouped[sec].forEach(i => {
+      const q = fmtQty(i.qty);
+      const u = i.unit && i.unit !== 'count' ? ' ' + i.unit : '';
+      const qty = q ? `${q}${u} ` : '';
+      txt += `- ${qty}${i.name}\n`;
+    });
+    txt += '\n';
+  });
+  return txt.trim();
+}
+
+async function copyList() {
+  const txt = buildListText();
+  try {
+    await navigator.clipboard.writeText(txt);
+    toast('Copied to clipboard');
+  } catch (e) {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('Copied');
+  }
+}
+
+/* ---------- Walmart shopping mode ---------- */
+let wmDone = new Set();
+
+function walmartSearchUrl(item) {
+  // Parentheticals like "(90% lean)" hurt Walmart's search — strip them
+  const term = item.name.replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+  return 'https://www.walmart.com/search?q=' + encodeURIComponent(term);
+}
+
+// Grocery list items in section order (same order as the on-screen list)
+function wmItemsList() {
+  const items = aggregateIngredients(false);
+  const grouped = {};
+  items.forEach(i => {
+    const s = i.section || 'Other';
+    if (!grouped[s]) grouped[s] = [];
+    grouped[s].push(i);
+  });
+  const ordered = [];
+  SECTIONS.forEach(sec => {
+    if (!grouped[sec]) return;
+    grouped[sec].sort((a, b) => a.name.localeCompare(b.name));
+    grouped[sec].forEach(i => ordered.push({ ...i, _section: sec }));
+  });
+  return ordered;
+}
+
+function openWalmartModal() {
+  if (!wmItemsList().length) return toast('Add meals to your week first');
+  wmDone = new Set();
+  renderWalmartModal();
+  document.getElementById('wm-modal-bg').classList.add('show');
+}
+
+function closeWalmartModal() {
+  document.getElementById('wm-modal-bg').classList.remove('show');
+}
+
+function renderWalmartModal() {
+  const items = wmItemsList();
+  const wrap = document.getElementById('wm-items');
+  let html = '';
+  let lastSection = null;
+  items.forEach(i => {
+    if (i._section !== lastSection) {
+      html += `<div class="wm-section-title">${escapeHtml(i._section)}</div>`;
+      lastSection = i._section;
+    }
+    const k = ingKey(i.name, i.unit);
+    const done = wmDone.has(k);
+    const q = fmtQty(i.qty);
+    const u = i.unit && i.unit !== 'count' ? ' ' + i.unit : '';
+    html += `<div class="wm-item ${done ? 'done' : ''}">
+      <input type="checkbox" data-wm-key="${escapeHtml(k)}" ${done ? 'checked' : ''} title="Mark as added">
+      <span class="wm-name">${escapeHtml(i.name)}</span>
+      <span class="wm-qty">${q ? escapeHtml(q + u) : ''}</span>
+      <a class="wm-link" href="${walmartSearchUrl(i)}" target="walmart-shop" data-wm-key="${escapeHtml(k)}">Search ↗</a>
+    </div>`;
+  });
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) wmDone.add(cb.dataset.wmKey);
+      else wmDone.delete(cb.dataset.wmKey);
+      renderWalmartModal();
+    });
+  });
+  // Clicking a search link marks the item done (slight delay so the tab opens first)
+  wrap.querySelectorAll('a.wm-link').forEach(a => {
+    a.addEventListener('click', () => {
+      const k = a.dataset.wmKey;
+      setTimeout(() => { wmDone.add(k); renderWalmartModal(); }, 150);
+    });
+  });
+
+  const doneCount = items.filter(i => wmDone.has(ingKey(i.name, i.unit))).length;
+  document.getElementById('wm-progress').textContent = `${doneCount} of ${items.length} added`;
+  document.getElementById('wm-next').textContent =
+    doneCount >= items.length ? 'All done — check out at Walmart 🎉' : 'Open next item ↗';
+}
+
+function wmOpenNext() {
+  const items = wmItemsList();
+  const next = items.find(i => !wmDone.has(ingKey(i.name, i.unit)));
+  if (!next) {
+    window.open('https://www.walmart.com/cart', 'walmart-shop');
+    return;
+  }
+  window.open(walmartSearchUrl(next), 'walmart-shop');
+  wmDone.add(ingKey(next.name, next.unit));
+  renderWalmartModal();
+}
+
+/* ---------- Export / Import ---------- */
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date();
+  a.href = url;
+  a.download = `meal-planner-backup-${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Backup downloaded');
+}
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed.meals || !Array.isArray(parsed.meals)) throw new Error('Bad file');
+      if (!confirm('This will replace all current meals and your week plan. Continue?')) return;
+      // builtinV2 stays true so restoring an old backup never re-adds built-in recipes the user deleted
+      state = { meals: parsed.meals, weekPlan: parsed.weekPlan || [], builtinV2: true };
+      stapleOverrides.clear();
+      save();
+      renderAll();
+      toast('Backup restored');
+    } catch { toast('Could not read that file'); }
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- Recipe Import: Parsing ---------- */
+const UNIT_ALIASES = {
+  'cup': 'cup', 'cups': 'cup', 'c': 'cup', 'c.': 'cup',
+  'tablespoon': 'tbsp', 'tablespoons': 'tbsp', 'tbsp': 'tbsp', 'tbsp.': 'tbsp', 'tbs': 'tbsp', 'tb': 'tbsp', 'T': 'tbsp',
+  'teaspoon': 'tsp', 'teaspoons': 'tsp', 'tsp': 'tsp', 'tsp.': 'tsp', 't': 'tsp',
+  'ounce': 'oz', 'ounces': 'oz', 'oz': 'oz', 'oz.': 'oz',
+  'pound': 'lb', 'pounds': 'lb', 'lb': 'lb', 'lb.': 'lb', 'lbs': 'lb', 'lbs.': 'lb',
+  'gram': 'g', 'grams': 'g', 'g': 'g',
+  'kilogram': 'kg', 'kilograms': 'kg', 'kg': 'kg',
+  'liter': 'liter', 'liters': 'liter', 'litre': 'liter', 'litres': 'liter', 'l': 'liter',
+  'milliliter': 'ml', 'milliliters': 'ml', 'millilitre': 'ml', 'millilitres': 'ml', 'ml': 'ml',
+  'gallon': 'gallon', 'gallons': 'gallon', 'gal': 'gallon',
+  'clove': 'clove', 'cloves': 'clove',
+  'can': 'can', 'cans': 'can',
+  'jar': 'jar', 'jars': 'jar',
+  'bag': 'bag', 'bags': 'bag',
+  'box': 'box', 'boxes': 'box',
+  'bunch': 'bunch', 'bunches': 'bunch',
+  'pack': 'pack', 'packs': 'pack', 'package': 'pack', 'packages': 'pack', 'pkg': 'pack', 'pkg.': 'pack',
+  'head': 'head', 'heads': 'head',
+  'loaf': 'loaf', 'loaves': 'loaf',
+  'dozen': 'dozen',
+  'pinch': 'tsp', 'pinches': 'tsp', // approximate
+  'dash': 'tsp', 'dashes': 'tsp',
+  'sprig': 'count', 'sprigs': 'count',
+  'stalk': 'count', 'stalks': 'count',
+  'slice': 'count', 'slices': 'count',
+  'piece': 'count', 'pieces': 'count',
+};
+
+const SECTION_KEYWORDS = {
+  'Meat & seafood': ['ground beef','ground turkey','ground chicken','ground pork','ground lamb','beef','chicken breast','chicken thigh','chicken','pork chop','pork','turkey','lamb','bacon','sausage','chorizo','ham','steak','pepperoni','salami','prosciutto','meatball','rotisserie','salmon','tuna','shrimp','prawn','cod','tilapia','crab','lobster','scallop','mussel','clam','oyster','fish'],
+  'Dairy & eggs': ['heavy cream','sour cream','cream cheese','cottage cheese','half and half','half-and-half','buttermilk','whole milk','skim milk','almond milk','oat milk','soy milk','milk','greek yogurt','yogurt','butter','egg','eggs','mozzarella','parmesan','cheddar','feta','ricotta','swiss','provolone','brie','goat cheese','cheese'],
+  'Produce': ['baby potatoes','baby carrots','sweet potato','sweet potatoes','green onion','green onions','scallion','scallions','red onion','yellow onion','onion','garlic','ginger','shallot','leek','tomato','cherry tomato','tomatoes','romaine','iceberg','lettuce','spinach','kale','arugula','swiss chard','cabbage','bok choy','carrot','celery','potato','potatoes','broccoli','cauliflower','brussels sprout','cucumber','zucchini','squash','butternut','acorn squash','bell pepper','jalapeño','jalapeno','serrano','habanero','poblano','chili pepper','pepper','lemon','lime','orange','grapefruit','apple','banana','pear','peach','plum','avocado','strawberries','blueberries','raspberries','blackberries','grapes','melon','watermelon','pineapple','mango','cilantro','parsley','basil','mint','rosemary','thyme','dill','sage','chives','tarragon','mushroom','asparagus','corn','peas','green beans','snap peas','snow peas','sprouts','radish','beet','eggplant','olives','fennel','artichoke'],
+  'Bakery': ['bread','sourdough','baguette','tortilla','tortillas','bun','buns','roll','rolls','pita','naan','pizza crust','pizza dough','bagel','english muffin','croissant','muffin'],
+  'Frozen': ['frozen','ice cream','frozen vegetables','frozen fruit','frozen berries','frozen pizza','popsicle'],
+  'Pantry': ['chicken broth','chicken stock','beef broth','beef stock','vegetable broth','vegetable stock','bone broth','rice','jasmine rice','basmati rice','brown rice','wild rice','pasta','spaghetti','penne','rigatoni','fettuccine','linguine','rotini','macaroni','noodle','noodles','ramen','udon','flour','all-purpose flour','bread flour','almond flour','sugar','brown sugar','powdered sugar','salt','sea salt','kosher salt','pepper','black pepper','olive oil','extra virgin olive oil','vegetable oil','canola oil','sesame oil','coconut oil','avocado oil','vinegar','balsamic','rice vinegar','apple cider vinegar','soy sauce','tamari','fish sauce','worcestershire','marinara sauce','tomato sauce','tomato paste','salsa','ketchup','mustard','mayo','mayonnaise','sriracha','hot sauce','bbq sauce','barbecue sauce','peanut butter','almond butter','jelly','jam','honey','maple syrup','agave','molasses','breadcrumbs','panko','cornstarch','baking soda','baking powder','yeast','vanilla extract','almond extract','cocoa powder','chocolate chip','chocolate chips','semi-sweet','dark chocolate','oats','oatmeal','cereal','granola','quinoa','couscous','bulgur','lentil','lentils','chickpea','chickpeas','black beans','pinto beans','kidney beans','refried beans','cannellini','garbanzo','rice noodle','crackers','chips','pretzel','tortilla chips','taco shell','taco shells','enchilada sauce','popcorn','almonds','walnuts','pecans','cashews','peanuts','pistachios','sunflower seeds','pumpkin seeds','sesame seeds','chia seeds','flax','raisin','raisins','dried cranberries','prunes','dates','coconut','shredded coconut','taco seasoning','italian seasoning','chili powder','cumin','paprika','smoked paprika','garlic powder','onion powder','cinnamon','nutmeg','allspice','cloves','cardamom','curry powder','turmeric','bay leaf','bay leaves','cayenne','red pepper flakes','oregano','basil dried','dried basil','dried oregano','dried thyme'],
+  'Beverages': ['orange juice','apple juice','cranberry juice','juice','soda','sparkling water','seltzer','la croix','coffee','espresso','tea','green tea','black tea','wine','red wine','white wine','beer','lemonade'],
+  'Household': ['paper towel','paper towels','toilet paper','napkins','plastic wrap','aluminum foil','parchment paper','dish soap','laundry detergent','trash bag','trash bags','sponges','ziploc'],
+};
+
+const COMMON_STAPLES = [
+  'salt','sea salt','kosher salt','pepper','black pepper','olive oil','extra virgin olive oil',
+  'vegetable oil','canola oil','cooking spray','water'
+];
+
+function decodeFractions(s) {
+  const map = { '½':'1/2','⅓':'1/3','⅔':'2/3','¼':'1/4','¾':'3/4','⅛':'1/8','⅜':'3/8','⅝':'5/8','⅞':'7/8','⅙':'1/6','⅚':'5/6' };
+  Object.keys(map).forEach(k => {
+    s = s.split(k).join(' ' + map[k] + ' ');
+  });
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+function parseQty(s) {
+  s = s.trim();
+  // Range like "1-2" or "1 to 2": take the lower bound
+  const range = s.match(/^(\d+(?:\.\d+|\/\d+)?)\s*(?:-|to|–)\s*\d/i);
+  if (range) s = range[1];
+  // "1 1/2"
+  const mixed = s.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+  if (mixed) return Number(mixed[1]) + Number(mixed[2]) / Number(mixed[3]);
+  // "1/2"
+  const frac = s.match(/^(\d+)\/(\d+)$/);
+  if (frac) return Number(frac[1]) / Number(frac[2]);
+  // "1.5" or "2"
+  const num = parseFloat(s);
+  return isNaN(num) ? 0 : num;
+}
+
+function parseIngredientLine(rawLine) {
+  if (!rawLine) return null;
+  let line = decodeFractions(rawLine);
+  // Strip leading bullets, dashes, asterisks, numbers like "1." prefixes
+  line = line.replace(/^[\s•·▪▫\-*]+/, '').trim();
+  if (!line) return null;
+  // Skip non-ingredient lines (instructions, headers)
+  if (line.length > 200) return null; // probably a paragraph
+  if (/^(directions|instructions|method|preparation|ingredients|step \d)/i.test(line)) return null;
+
+  // Extract leading quantity. Allow decimal, fractions, mixed, or ranges.
+  const qtyRegex = /^([\d]+(?:\s+\d+\/\d+|\.\d+|\/\d+)?(?:\s*(?:-|to|–)\s*\d+(?:\.\d+|\/\d+)?)?)\s+(.+)$/;
+  let qty = 0;
+  let rest = line;
+  const qtyMatch = line.match(qtyRegex);
+  if (qtyMatch) {
+    qty = parseQty(qtyMatch[1]);
+    rest = qtyMatch[2];
+  }
+
+  // Drop a size parenthetical between qty and unit: "2 (10-ounce) cans tomatoes"
+  rest = rest.replace(/^\([^)]*\)\s*/, '');
+
+  // Extract unit (first word, if recognized)
+  let unit = '';
+  const unitRegex = /^(\S+)\s+(.+)$/;
+  const unitMatch = rest.match(unitRegex);
+  if (unitMatch) {
+    const candidate = unitMatch[1].toLowerCase().replace(/[.,]$/, '');
+    if (UNIT_ALIASES[candidate] || UNIT_ALIASES[unitMatch[1]]) {
+      unit = UNIT_ALIASES[candidate] || UNIT_ALIASES[unitMatch[1]];
+      rest = unitMatch[2];
+    }
+  }
+
+  // Clean name
+  let name = rest;
+  name = name.replace(/^of\s+/i, '');
+  // Remove parentheticals like "(15 oz)" or "(about 2)"
+  name = name.replace(/\([^)]*\)/g, '').trim();
+  // Cut off at first comma (preparation notes: "garlic, minced")
+  const commaIdx = name.indexOf(',');
+  if (commaIdx > 0) name = name.slice(0, commaIdx).trim();
+  // Remove "to taste" suffix
+  name = name.replace(/\s+to taste$/i, '').trim();
+  // Remove leading size words
+  name = name.replace(/^(large|small|medium|extra-large|jumbo|whole)\s+/i, '');
+  // Final cleanup
+  name = name.replace(/\s+/g, ' ').trim();
+  if (!name) return null;
+
+  return {
+    qty,
+    unit,
+    name,
+    section: guessSection(name),
+    isStaple: guessIsStaple(name)
+  };
+}
+
+function guessSection(name) {
+  const n = name.toLowerCase();
+  let bestSection = 'Other';
+  let bestLen = 0;
+  for (const [section, keywords] of Object.entries(SECTION_KEYWORDS)) {
+    for (const kw of keywords) {
+      if (n.includes(kw) && kw.length > bestLen) {
+        bestLen = kw.length;
+        bestSection = section;
+      }
+    }
+  }
+  return bestSection;
+}
+
+function guessIsStaple(name) {
+  const n = name.toLowerCase().trim();
+  return COMMON_STAPLES.some(s => n === s || n === s + 's' || n.includes(s));
+}
+
+function parseRecipeText(name, text) {
+  const lines = text.split(/\n|\r/).map(l => l.trim()).filter(Boolean);
+  const ingredients = lines
+    .map(parseIngredientLine)
+    .filter(Boolean)
+    .map(i => ({ id: uid(), ...i }));
+  return { name: name || 'Pasted recipe', notes: '', ingredients };
+}
+
+/* ---------- Recipe Import: URL Fetching ---------- */
+async function fetchRecipeFromUrl(url) {
+  // Use corsproxy.io as the CORS proxy. If it fails, the user can fall back to paste.
+  const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+  const resp = await fetch(proxyUrl);
+  if (!resp.ok) throw new Error(`Server returned ${resp.status}. The site may block automated reads.`);
+  const html = await resp.text();
+  const recipe = parseRecipeFromHtml(html);
+  if (!recipe) throw new Error('Couldn\'t find a recipe on that page. Try Paste text or Via Claude instead.');
+  return recipeSchemaToMeal(recipe);
+}
+
+function parseRecipeFromHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+  for (const script of scripts) {
+    try {
+      const data = JSON.parse(script.textContent);
+      const recipe = findRecipe(data);
+      if (recipe) return recipe;
+    } catch (e) { /* ignore parse errors */ }
+  }
+  return null;
+}
+
+function findRecipe(data) {
+  if (!data) return null;
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      const r = findRecipe(item);
+      if (r) return r;
+    }
+    return null;
+  }
+  if (typeof data === 'object') {
+    if (data['@graph']) {
+      const r = findRecipe(data['@graph']);
+      if (r) return r;
+    }
+    const t = data['@type'];
+    if (t === 'Recipe' || (Array.isArray(t) && t.includes('Recipe'))) return data;
+  }
+  return null;
+}
+
+function recipeSchemaToMeal(recipe) {
+  const name = (recipe.name || 'Imported recipe').toString().trim();
+  let notes = '';
+  if (recipe.description) notes = String(recipe.description).replace(/\s+/g, ' ').trim().slice(0, 200);
+  if (recipe.totalTime && !notes) notes = 'Total time: ' + String(recipe.totalTime);
+
+  const ingLines = recipe.recipeIngredient || recipe.ingredients || [];
+  const ingredients = (Array.isArray(ingLines) ? ingLines : [])
+    .map(line => parseIngredientLine(typeof line === 'string' ? line : ''))
+    .filter(Boolean)
+    .map(i => ({ id: uid(), ...i }));
+
+  return { name, notes, ingredients };
+}
+
+/* ---------- Recipe Import: PDF ---------- */
+const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let pdfjsReady = null;
+
+function loadPdfJs() {
+  if (pdfjsReady) return pdfjsReady;
+  pdfjsReady = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = PDFJS_URL;
+    s.onload = async () => {
+      try {
+        // Browsers won't start a worker from another origin — wrap the CDN script in a local blob URL
+        const code = await fetch(PDFJS_WORKER_URL).then(r => r.text());
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+      } catch (e) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+      }
+      resolve(window.pdfjsLib);
+    };
+    s.onerror = () => {
+      pdfjsReady = null;
+      reject(new Error('Could not load the PDF reader — check your internet connection.'));
+    };
+    document.head.appendChild(s);
+  });
+  return pdfjsReady;
+}
+
+// Extract text as lines, keeping page + position so multi-column layouts can be re-joined
+async function extractPdfLines(file) {
+  const pdfjs = await loadPdfJs();
+  const buf = await file.arrayBuffer();
+  const doc = await pdfjs.getDocument({ data: buf }).promise;
+  const lines = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p);
+    const tc = await page.getTextContent();
+    let cur = null, lastEndX = null;
+    const push = () => {
+      if (cur && cur.text.trim()) lines.push({ ...cur, text: cur.text.replace(/\s+/g, ' ').trim() });
+      cur = null;
+    };
+    for (const it of tc.items) {
+      if (!it.str) continue;
+      const y = it.transform[5], x = it.transform[4];
+      if (!cur || Math.abs(y - cur.y) > 3) {
+        push();
+        cur = { text: '', y, x, page: p };
+        lastEndX = null;
+      }
+      // Only insert a space when there's a real horizontal gap — avoids "Sim ple" artifacts
+      if (cur.text && lastEndX !== null && x - lastEndX > 1.5) cur.text += ' ';
+      cur.text += it.str;
+      lastEndX = x + (it.width || 0);
+    }
+    push();
+  }
+  return lines;
+}
+
+function pdfLinesToMeal(lineObjs, fallbackName) {
+  const texts = lineObjs.map(l => l.text);
+  const name = (fallbackName || '').trim() || texts[0] || 'Imported PDF recipe';
+  const notes = texts.slice(0, 12)
+    .filter(t => /^(time|yield|serves|total)\b/i.test(t))
+    .join(' · ').slice(0, 200);
+
+  // Find the ingredient block in reading order
+  const startRe = /^(ingredients|what you need)\b/i;
+  const endRe = /^(instructions|how to make|directions|method|preparation|before you begin|nutrition)\b/i;
+  const skipRe = /^(shop ingredients|scan qr|this recipe on jupiter|dough$|filling$|glaze$|topping$|frosting$|for the )/i;
+
+  const startIdx = lineObjs.findIndex(l => startRe.test(l.text));
+  let block = [];
+  if (startIdx >= 0) {
+    for (let i = startIdx + 1; i < lineObjs.length; i++) {
+      if (endRe.test(lineObjs[i].text)) break;
+      if (skipRe.test(lineObjs[i].text)) continue;
+      block.push(lineObjs[i]);
+    }
+  } else {
+    block = lineObjs.filter(l => !skipRe.test(l.text));
+  }
+
+  // Some PDFs (e.g. Half Baked Harvest) print quantities and ingredient names as
+  // separate text columns — rejoin anything that sits on the same printed row.
+  const rowKey = l => l.page + '|' + Math.round(l.y / 3);
+  const rows = new Map();
+  block.forEach(l => {
+    if (!rows.has(rowKey(l))) rows.set(rowKey(l), []);
+    rows.get(rowKey(l)).push(l);
+  });
+  const joined = [];
+  const seen = new Set();
+  block.forEach(l => {
+    const key = rowKey(l);
+    if (seen.has(key)) return;
+    seen.add(key);
+    joined.push(rows.get(key).slice().sort((a, b) => a.x - b.x).map(p => p.text).join(' ').trim());
+  });
+
+  // Merge wrapped lines: a new ingredient starts with a quantity
+  const qtyStart = /^[\d¼½¾⅓⅔⅛⅜⅝⅞⅙⅚]/;
+  const merged = [];
+  joined.forEach(t => {
+    if (!t) return;
+    if (qtyStart.test(t) || !merged.length) merged.push(t);
+    else merged[merged.length - 1] += ' ' + t;
+  });
+
+  const ingredients = merged
+    .map(parseIngredientLine)
+    .filter(Boolean)
+    .filter(i => i.name.length > 1 && !/\breserved\b/i.test(i.name))
+    .map(i => ({ id: uid(), ...i }));
+
+  return { name, notes, ingredients };
+}
+
+function nameFromPdfFilename(fn) {
+  return fn.replace(/\.pdf$/i, '').split(/\s*[_|]\s*/)[0].replace(/[-_]+/g, ' ').trim();
+}
+
+async function handlePdfFile(file) {
+  if (!file) return;
+  showImportStatus('import-pdf-status', 'info', 'Reading PDF…');
+  try {
+    const lines = await extractPdfLines(file);
+    const meal = pdfLinesToMeal(lines, nameFromPdfFilename(file.name));
+    if (!meal.ingredients.length) {
+      showImportStatus('import-pdf-status', 'error',
+        "Couldn't find an ingredient list in that PDF. If it's a scanned image, use Paste text instead.");
+      return;
+    }
+    showImportStatus('import-pdf-status', 'success',
+      `Found "${meal.name}" with ${meal.ingredients.length} ingredients. Opening editor…`);
+    setTimeout(() => {
+      closeImportModal();
+      openMealModalPrefilled(meal);
+    }, 600);
+  } catch (err) {
+    showImportStatus('import-pdf-status', 'error', err.message || 'Could not read that PDF.');
+  }
+}
+
+/* ---------- Recipe Import: Modal UI ---------- */
+function openImportModal() {
+  // Reset everything
+  document.getElementById('import-url').value = '';
+  document.getElementById('import-paste-name').value = '';
+  document.getElementById('import-paste-text').value = '';
+  document.getElementById('import-claude-json').value = '';
+  document.getElementById('import-pdf-file').value = '';
+  ['import-url-status','import-pdf-status','import-paste-status','import-claude-status'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('show','info','error','success');
+    el.textContent = '';
+  });
+  switchImportTab('url');
+  document.getElementById('import-modal-bg').classList.add('show');
+  setTimeout(() => document.getElementById('import-url').focus(), 50);
+}
+
+function closeImportModal() {
+  document.getElementById('import-modal-bg').classList.remove('show');
+}
+
+function switchImportTab(name) {
+  document.querySelectorAll('.import-tab').forEach(t => t.classList.toggle('active', t.dataset.importTab === name));
+  document.querySelectorAll('.import-pane').forEach(p => p.classList.toggle('active', p.dataset.importPane === name));
+}
+
+function showImportStatus(id, kind, msg) {
+  const el = document.getElementById(id);
+  el.classList.remove('info','error','success');
+  el.classList.add('show', kind);
+  el.textContent = msg;
+}
+
+async function handleFetchUrl() {
+  const url = document.getElementById('import-url').value.trim();
+  if (!url) return showImportStatus('import-url-status', 'error', 'Enter a URL first.');
+  let parsed;
+  try { parsed = new URL(url); } catch { return showImportStatus('import-url-status', 'error', 'That doesn\'t look like a valid URL.'); }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return showImportStatus('import-url-status', 'error', 'URL must start with http:// or https://');
+  }
+  showImportStatus('import-url-status', 'info', 'Fetching… this can take a few seconds.');
+  const btn = document.getElementById('btn-fetch-url');
+  btn.disabled = true;
+  try {
+    const meal = await fetchRecipeFromUrl(url);
+    if (meal.ingredients.length === 0) {
+      showImportStatus('import-url-status', 'error', 'Found a recipe but couldn\'t parse any ingredients. Try Paste text instead.');
+      return;
+    }
+    showImportStatus('import-url-status', 'success', `Found "${meal.name}" with ${meal.ingredients.length} ingredients. Opening editor…`);
+    setTimeout(() => {
+      closeImportModal();
+      openMealModalPrefilled(meal);
+    }, 600);
+  } catch (err) {
+    showImportStatus('import-url-status', 'error', err.message || 'Could not fetch that page.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function handleParsePaste() {
+  const name = document.getElementById('import-paste-name').value.trim();
+  const text = document.getElementById('import-paste-text').value.trim();
+  if (!text) return showImportStatus('import-paste-status', 'error', 'Paste an ingredient list first.');
+  const meal = parseRecipeText(name, text);
+  if (meal.ingredients.length === 0) {
+    return showImportStatus('import-paste-status', 'error', 'Could not parse any ingredients from that text.');
+  }
+  showImportStatus('import-paste-status', 'success', `Parsed ${meal.ingredients.length} ingredients. Opening editor…`);
+  setTimeout(() => {
+    closeImportModal();
+    openMealModalPrefilled(meal);
+  }, 500);
+}
+
+function handleParseClaude() {
+  const raw = document.getElementById('import-claude-json').value.trim();
+  if (!raw) return showImportStatus('import-claude-status', 'error', 'Paste Claude\'s JSON response first.');
+  let parsed;
+  try {
+    // Strip markdown fences if Claude included them
+    let cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+    parsed = JSON.parse(cleaned);
+  } catch (e) {
+    return showImportStatus('import-claude-status', 'error', 'That doesn\'t look like valid JSON. Make sure you copied the full object.');
+  }
+  if (!parsed.name || !Array.isArray(parsed.ingredients)) {
+    return showImportStatus('import-claude-status', 'error', 'JSON is missing "name" or "ingredients" array.');
+  }
+  const meal = {
+    name: parsed.name,
+    notes: parsed.notes || '',
+    ingredients: parsed.ingredients
+      .filter(i => i && i.name)
+      .map(i => ({
+        id: uid(),
+        name: String(i.name).trim(),
+        qty: Number(i.qty) || 0,
+        unit: i.unit || '',
+        section: SECTIONS.includes(i.section) ? i.section : guessSection(i.name),
+        isStaple: !!i.isStaple
+      }))
+  };
+  if (meal.ingredients.length === 0) {
+    return showImportStatus('import-claude-status', 'error', 'No valid ingredients found in the JSON.');
+  }
+  showImportStatus('import-claude-status', 'success', `Imported ${meal.ingredients.length} ingredients. Opening editor…`);
+  setTimeout(() => {
+    closeImportModal();
+    openMealModalPrefilled(meal);
+  }, 500);
+}
+
+function openMealModalPrefilled(mealData) {
+  // Use the existing meal modal but pre-fill it with imported data (no id = treated as new)
+  editingMealId = null;
+  document.getElementById('meal-modal-title').textContent = 'Review imported meal';
+  document.getElementById('meal-modal-delete').style.display = 'none';
+  document.getElementById('meal-name').value = mealData.name || '';
+  document.getElementById('meal-notes').value = mealData.notes || '';
+  modalIngredients = mealData.ingredients.map(i => ({ ...i, id: i.id || uid() }));
+  if (modalIngredients.length === 0) {
+    modalIngredients = [{ id: uid(), name: '', qty: '', unit: '', section: 'Produce', isStaple: false }];
+  }
+  renderIngTable();
+  document.getElementById('meal-modal-bg').classList.add('show');
+  setTimeout(() => document.getElementById('meal-name').focus(), 50);
+}
+
+async function copyClaudePrompt() {
+  const txt = document.getElementById('claude-prompt-text').textContent;
+  try {
+    await navigator.clipboard.writeText(txt);
+    toast('Prompt copied');
+  } catch {
+    toast('Select the text and copy manually');
+  }
+}
+
+/* ---------- Toast ---------- */
+let toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* ---------- Wiring ---------- */
+function renderAll() {
+  renderWeek();
+  renderLibrary();
+  renderGroceryList();
+}
+
+function init() {
+  document.getElementById('btn-add-meal').addEventListener('click', () => openMealModal());
+  document.getElementById('btn-clear-week').addEventListener('click', () => {
+    if (state.weekPlan.length === 0) return;
+    if (!confirm('Clear all meals from this week?')) return;
+    state.weekPlan = [];
+    stapleOverrides.clear();
+    save();
+    renderAll();
+  });
+
+  document.getElementById('meal-modal-close').addEventListener('click', closeMealModal);
+  document.getElementById('meal-modal-cancel').addEventListener('click', closeMealModal);
+  document.getElementById('meal-modal-save').addEventListener('click', saveMeal);
+  document.getElementById('meal-modal-delete').addEventListener('click', deleteMeal);
+  document.getElementById('meal-modal-bg').addEventListener('click', e => {
+    if (e.target.id === 'meal-modal-bg') closeMealModal();
+  });
+  document.getElementById('add-ing-btn').addEventListener('click', addIngRow);
+
+  document.getElementById('btn-export').addEventListener('click', exportData);
+  document.getElementById('btn-import').addEventListener('click', () => document.getElementById('import-file').click());
+  document.getElementById('import-file').addEventListener('change', e => {
+    if (e.target.files[0]) importData(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  document.getElementById('btn-copy').addEventListener('click', copyList);
+
+  // Walmart shopping mode
+  document.getElementById('btn-walmart').addEventListener('click', openWalmartModal);
+  document.getElementById('wm-modal-close').addEventListener('click', closeWalmartModal);
+  document.getElementById('wm-modal-bg').addEventListener('click', e => {
+    if (e.target.id === 'wm-modal-bg') closeWalmartModal();
+  });
+  document.getElementById('wm-next').addEventListener('click', wmOpenNext);
+  document.getElementById('wm-copy').addEventListener('click', copyList);
+
+  // Recipe import
+  document.getElementById('btn-import-recipe').addEventListener('click', openImportModal);
+  document.getElementById('import-modal-close').addEventListener('click', closeImportModal);
+  document.getElementById('import-modal-cancel').addEventListener('click', closeImportModal);
+  document.getElementById('import-modal-bg').addEventListener('click', e => {
+    if (e.target.id === 'import-modal-bg') closeImportModal();
+  });
+  document.querySelectorAll('.import-tab').forEach(t => {
+    t.addEventListener('click', () => switchImportTab(t.dataset.importTab));
+  });
+  document.getElementById('btn-fetch-url').addEventListener('click', handleFetchUrl);
+  document.getElementById('import-url').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); handleFetchUrl(); }
+  });
+  document.getElementById('import-pdf-file').addEventListener('change', e => {
+    if (e.target.files[0]) handlePdfFile(e.target.files[0]);
+  });
+  document.getElementById('btn-parse-paste').addEventListener('click', handleParsePaste);
+  document.getElementById('btn-parse-claude').addEventListener('click', handleParseClaude);
+  document.getElementById('btn-copy-claude-prompt').addEventListener('click', copyClaudePrompt);
+
+  // Staples panel toggle
+  document.getElementById('staples-head').addEventListener('click', () => {
+    const list = document.getElementById('staples-list');
+    const hint = document.getElementById('staples-hint');
+    const tog = document.getElementById('staples-toggle');
+    const showing = list.classList.toggle('show');
+    hint.style.display = showing ? '' : 'none';
+    tog.textContent = showing ? '▴' : '▾';
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeMealModal(); closeImportModal(); closeWalmartModal(); }
+  });
+
+  renderAll();
+}
+
+init();
+</script>
+</body>
+</html>
